@@ -1,25 +1,103 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducable Research Peer Assessment 1"
+output: html_document
 ---
 
 
-## Loading and preprocessing the data
 
+## Loading and preprocessing the data
+Read data file into a dataframe and inspect the data.
+```{r}
+data = read.csv('activity.csv', header = T)
+names(data)
+head(data)
+dim(data)
+```
+
+Transform the date field into the date class 
+```{r}
+date <- strptime(data$date, "%Y-%m-%d")
+data$date <- date
+```
+
+Get unique dates for use in subsequent calculations
+```{r}
+uniqueDates <- unique(data$date)
+```
+
+Get unique intervals for use in subsequent calculations
+```{r}
+uniqueIntervals <- unique(data$interval)
+```
 
 
 ## What is mean total number of steps taken per day?
+Create a histogram of number of steps taken per day.
+```{r}
+# split and group data by the day of the year (yday).
+# Example: 1st Jan => yday = 1, 31st Dec => yday = 365
+groupByDays <- split(data$steps, data$date$yday)
 
+# Find the sum of steps each day of the year, ignoring empty values
+stepsEachDay <- sapply(groupByDays, sum, na.rm=TRUE)
 
+# Plot histogram with x-axis as day of the year
+# and the y-axis as the total number of steps 
+plot(uniqueDates, stepsEachDay, main="Histogram of Steps Each Day", 
+     xlab="Date", ylab="Frequency", type="h", lwd=4, col="blue")
+
+```
+
+Calculating the mean of number of steps each day
+```{r}
+meanStepsEachDay <- sapply(groupByDays, mean, na.rm=TRUE)
+dfMeanStepsEachDay <- data.frame(date=uniqueDates, mean=meanStepsEachDay, row.names=NULL)
+dfMeanStepsEachDay
+
+```
+
+Calculating the median of number of steps each day
+```{r}
+medianStepsEachDay <- sapply(groupByDays, median, na.rm=TRUE)
+dfMedianStepsEachDay <- data.frame(date=uniqueDates, median=meanStepsEachDay, row.names=NULL)
+dfMedianStepsEachDay
+
+```
 
 ## What is the average daily activity pattern?
 
+```{r}
+# split and group data by the interval field.
+groupByIntervals <- split(data$steps, data$interval)
+
+# Find the mean of steps for each interval, ignoring empty values
+meanStepsEachInterval <- sapply(groupByIntervals, mean, na.rm=TRUE)
+
+# Plot the time-series
+plot(uniqueIntervals, meanStepsEachInterval, type="l",
+     main="Average Number of Steps per Interval", 
+     xlab="Interval", ylab="Average # of steps", 
+     lwd=2, col="blue")
+
+# Find the location of where the maximum is
+maxMeanStepsEachInterval <- max(meanStepsEachInterval, na.rm=TRUE)
+maxMeanStepsEachIntervalIdx <- which(meanStepsEachInterval == maxMeanStepsEachInterval)
+maxInterval <- uniqueIntervals[maxMeanStepsEachIntervalIdx]
+
+# Print the location of the maximum interval
+maxInterval
+
+```
 
 
-## Imputing missing values
+## Inputing missing values
+
+Calculate total amount of missing values in the data set:
+```{r}
+booleanComplete <- complete.cases(data$steps)
+sumMissing <- sum(as.numeric(!booleanComplete))
+sumMissing
+
+```
 
 
-
-## Are there differences in activity patterns between weekdays and weekends?
